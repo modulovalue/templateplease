@@ -1,6 +1,8 @@
-import 'dart:js' as js;
+import 'dart:html';
 
 import 'package:flutter/material.dart';
+import 'package:templateplease/util.dart';
+import 'package:templateplease/widget_gist.dart';
 import 'package:templateplease/widget_paste.dart';
 import 'package:templateplease/widget_placeholders.dart';
 import 'package:templateplease/widget_preview.dart';
@@ -32,7 +34,27 @@ class _TestState extends State<Test> {
   String sourceText = "";
   String error;
 
+  String loadedGistOrNull;
+
   final Map<String, TextEditingController> vars = {};
+
+  @override
+  void initState() {
+    super.initState();
+    loadedGistOrNull = _getGistIDOrNull();
+  }
+
+  String _getGistIDOrNull() {
+    final uri = Uri.tryParse(window.location.href);
+    if (uri == null) {
+      return null;
+    }
+    final id = uri.queryParameters["gist"].toString();
+    if (id == null || id == "" || id == null || id == "null") {
+      return null;
+    }
+    return id;
+  }
 
   void setText(String text) {
     setState(() {
@@ -54,125 +76,66 @@ class _TestState extends State<Test> {
 
   @override
   Widget build(BuildContext context) {
-    const cardElevation = 1.0;
-    const cardSpacing = 24.0;
     return Scaffold(
       backgroundColor: Colors.white,
       body: Builder(builder: (context) {
         return Center(
           child: ListView(
-            padding: const EdgeInsets.all(24.0),
+            padding: const EdgeInsets.all(18.0),
             shrinkWrap: true,
             children: [
               Center(
-                child: Text(
-                  "Template, Please",
-                  style: TextStyle(
+                child: GestureDetector(
+                  onTap: () {
+                    openSelfWithNewParams((a) => <String, dynamic>{});
+                  },
+                  child: Text(
+                    "Template, Please",
+                    style: TextStyle(
                       fontWeight: FontWeight.w900,
                       fontSize: 36.0,
-                      fontStyle: FontStyle.italic),
-                ),
-              ),
-              const SizedBox(height: 2.0),
-              Center(
-                child: Text(
-                  "Visual Templating",
-                  style: TextStyle(
-                    fontWeight: FontWeight.w400,
-                    fontSize: 12.0,
-                    color: Colors.black,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
                 ),
               ),
-              const SizedBox(height: 24.0),
-              Center(
-                child: Card(
-                  elevation: cardElevation,
-                  child: paste(
-                    fromString: (str) async {
-                      setText(str);
-                    },
-                  ),
-                ),
-              ),
-              const SizedBox(height: cardSpacing),
-              Center(
-                child: Card(
-                  elevation: cardElevation,
-                  child: placeholders(
-                    vars: vars.map(
-                        (key, value) => MapEntry(removeBraces(key), value)),
-                    source: sourceText,
-                    error: error,
-                    setError: (err) => setState(() => error = err),
-                    setOutput: (output) =>
-                        setState(() => targetController.text = output),
-                    outputController: targetController,
-                    varsRaw: vars.map((key, value) =>
-                        MapEntry(removeBraces(key), value.text)),
-                  ),
-                ),
-              ),
-              const SizedBox(height: cardSpacing),
+              const SizedBox(height: 18.0),
               Card(
-                elevation: cardElevation,
-                child: PreviewWidget(targetController.text, targetController),
-              ),
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 4.0, vertical: 8.0),
-                child: Wrap(
-                  spacing: 8.0,
-                  runSpacing: 8.0,
-                  children: <Widget>[
-                    _verticalCenter(
-                      GestureDetector(
-                          child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: <Widget>[
-                          const Text(
-                            "Made with ",
-                          ),
-                          const FlutterLogo(
-                            size: 50.0,
-                            style: FlutterLogoStyle.horizontal,
-                          ),
-                          const Text(
-                            " for web",
-                          ),
-                        ],
-                      )),
-                    ),
-                    _verticalCenter(const Text("•")),
-                    _verticalCenter(
-                      GestureDetector(
-                        onTap: () => js.context.callMethod("open", <dynamic>[
-                          "https://github.com/modulovalue/templateplease"
-                        ]),
-                        child: Text(
-                          "Issues?",
-                          style: TextStyle(
-                            decoration: TextDecoration.underline,
-                          ),
+                child: Padding(
+                  padding: const EdgeInsets.all(18.0),
+                  child: Column(
+                    children: <Widget>[
+                      if (loadedGistOrNull != null) //
+                        GistInfoWidget(
+                          gistID: loadedGistOrNull,
+                          setContent: setText,
+                        )
+                      else if (loadedGistOrNull == null) //
+                        paste(fromString: setText),
+                      if (sourceText.isNotEmpty) ...[
+                        const SizedBox(height: 42.0),
+                        placeholders(
+                          vars: vars.map((key, value) =>
+                              MapEntry(removeBraces(key), value)),
+                          source: sourceText,
+                          error: error,
+                          setError: (err) => setState(() => error = err),
+                          setOutput: (output) =>
+                              setState(() => targetController.text = output),
+                          outputController: targetController,
+                          varsRaw: vars.map((key, value) =>
+                              MapEntry(removeBraces(key), value.text)),
                         ),
-                      ),
-                    ),
-                    _verticalCenter(const Text("•")),
-                    _verticalCenter(
-                      GestureDetector(
-                        onTap: () => js.context.callMethod("open",
-                            <dynamic>["https://twitter.com/modulovalue"]),
-                        child: Text(
-                          "by @modulovalue",
-                          style: TextStyle(
-                            decoration: TextDecoration.underline,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                        const SizedBox(height: 24.0),
+                      ],
+                      if (sourceText.isNotEmpty) //
+                        const SizedBox(height: 14.0),
+                      PreviewWidget(targetController.text, targetController),
+                    ],
+                  ),
                 ),
               ),
+              footer(),
             ],
           ),
         );
@@ -181,9 +144,68 @@ class _TestState extends State<Test> {
   }
 }
 
+Widget footer() {
+  return Center(
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 8.0),
+      child: Wrap(
+        spacing: 8.0,
+        runSpacing: 8.0,
+        children: <Widget>[
+          _verticalCenter(
+            GestureDetector(
+              onTap: () => openUrl("https://github.com/modulovalue/templateplease/issues"),
+              child: Text(
+                "Issues?",
+                style: TextStyle(
+                  decoration: TextDecoration.underline,
+                  color: Colors.grey,
+                ),
+              ),
+            ),
+          ),
+          _verticalCenter(const Text("•")),
+          _verticalCenter(
+            GestureDetector(
+              onTap: () => openUrl("https://github.com/modulovalue/templateplease"),
+              child: Text(
+                "GitHub",
+                style: TextStyle(
+                  decoration: TextDecoration.underline,
+                  color: Colors.grey,
+                ),
+              ),
+            ),
+          ),
+          _verticalCenter(const Text("•")),
+          _verticalCenter(
+            openLink(
+              "https://twitter.com/modulovalue",
+              Text(
+                "@modulovalue",
+                style: TextStyle(
+                  decoration: TextDecoration.underline,
+                  color: Colors.grey,
+                ),
+              ),
+            ),
+          ),
+          _verticalCenter(const Text("•")),
+          _verticalCenter(
+            const FlutterLogo(
+              size: 50.0,
+              style: FlutterLogoStyle.horizontal,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
 Widget _verticalCenter(Widget child) {
   return SizedBox(
-    height: 50,
+    height: 20,
     child: Row(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -192,20 +214,4 @@ Widget _verticalCenter(Widget child) {
       ],
     ),
   );
-}
-
-Set<String> findVariableNames(String input) {
-  return RegExp(mustacheVariableRegex).allMatches(input).map((match) {
-    return match.group(0);
-  }).toSet();
-}
-
-const mustacheVariableRegex = r"{{([\:\/\-\\\,\.a-zA-Z0-9\s])*}}";
-
-String removeBraces(String str) {
-  if (str.length >= 4) {
-    return str.substring(2, str.length - 2);
-  } else {
-    return str;
-  }
 }

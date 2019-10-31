@@ -1,63 +1,142 @@
+import 'dart:html';
+
 import 'package:flutter/material.dart';
 import 'package:templateplease/gists.dart';
-import 'package:http/http.dart' as http;
+import 'package:templateplease/util.dart';
 
 Widget paste({
   @required void Function(String set) fromString,
 }) {
-  return Padding(
-    padding: const EdgeInsets.all(18.0),
-    child: Column(
-      children: <Widget>[
-        Builder(
-          builder: (context) {
-            return RaisedButton(
-              color: const Color(0xFF333333),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(100),
-              ),
-              child: Text(
-                "Import a recipe from GitHub Gist",
-                style: TextStyle(
-                  fontSize: 12.0,
-                  color: Colors.white,
-                ),
-              ),
-              onPressed: () async {
-                await showDialog<void>(
-                  context: context,
-                  builder: (context) {
-                    return ImportGISTButton(
-                      setText: fromString,
+  return Column(
+    children: <Widget>[
+      Wrap(
+        spacing: 8.0,
+        runSpacing: 8.0,
+        runAlignment: WrapAlignment.center,
+        alignment: WrapAlignment.center,
+        children: <Widget>[
+          _tutorial(),
+          Builder(
+            builder: (context) {
+              return Container(
+                height: 28.0,
+                child: RaisedButton(
+                  color: const Color(0xFF333333),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(100),
+                  ),
+                  child: Text(
+                    "Import a recipe from a GitHub Gist",
+                    style: TextStyle(
+                      fontSize: 12.0,
+                      color: Colors.white,
+                    ),
+                  ),
+                  onPressed: () async {
+                    await showDialog<void>(
+                      context: context,
+                      builder: (context) {
+                        return ImportGISTButton(
+                          setText: fromString,
+                        );
+                      },
                     );
                   },
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+      const SizedBox(height: 12.0),
+      Wrap(
+        spacing: 8.0,
+        runSpacing: 8.0,
+        runAlignment: WrapAlignment.center,
+        alignment: WrapAlignment.center,
+        children: <Widget>[
+          _exampleButton("Basic GitHub README", () {
+            openSelfWithNewParams((old) => old
+              ..addAll(<String, dynamic>{
+                "gist": "980c10cbf436622fcbd179ce56b1b889",
+              }));
+          }),
+          _exampleButton("README Social Badges", () {
+            openSelfWithNewParams((old) => old
+              ..addAll(<String, dynamic>{
+                "gist": "a366237e9878c47edc1b6280df5a46cb",
+              }));
+          }),
+        ],
+      ),
+    ],
+  );
+}
+
+Widget _tutorial() {
+  return Builder(
+    builder: (context) {
+      return Container(
+        height: 28.0,
+        child: RaisedButton(
+          color: const Color(0xFF333333),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(100),
+          ),
+          child: Text(
+            "Tutorial",
+            style: TextStyle(
+              fontSize: 12.0,
+              color: Colors.white,
+            ),
+          ),
+          onPressed: () async {
+            await showDialog<void>(
+              context: context,
+              builder: (context) {
+                return AlertDialog(
+                  title: const Text("Tutorial"),
+                  content: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      openLink(
+                        "https://gist.github.com/",
+                        const Text(
+                          "1. Go to https://gist.github.com/",
+                          style: TextStyle(
+                            color: Colors.blue,
+                          ),
+                        ),
+                      ),
+                      const Text("2. Create a public Gist"),
+                      const Text(
+                        "3. Replace everything you want to type in manually with {{placeholdername}}",
+                      ),
+                      const Text(" "),
+                      openLink(
+                        "https://gist.github.com/modulovalue/a366237e9878c47edc1b6280df5a46cb",
+                        const Text(
+                          "Example Gist",
+                          style: TextStyle(
+                            color: Colors.blue,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  actions: <Widget>[
+                    FlatButton(
+                      child: const Text("Close"),
+                      onPressed: () => Navigator.pop(context),
+                    )
+                  ],
                 );
               },
             );
           },
         ),
-        const SizedBox(height: 12.0),
-        Row(
-          mainAxisSize: MainAxisSize.max,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Wrap(
-              spacing: 12.0,
-              runSpacing: 12.0,
-              children: <Widget>[
-                _exampleButton("Hello, World!", () {
-                  fromString("Hello, {{World}}!");
-                }),
-                _exampleButton("README Social Badges", () {
-                  fromString(
-                      "[![Twitter Follow](https://img.shields.io/twitter/follow/{{Twitter}}?style=social&logo=twitter)](https://twitter.com/{{Twitter}}) [![GitHub Follow](https://img.shields.io/github/followers/{{GitHub}}?style=social&logo=github)](https://github.com/{{GitHub}})");
-                }),
-              ],
-            ),
-          ],
-        ),
-      ],
-    ),
+      );
+    },
   );
 }
 
@@ -74,8 +153,6 @@ class ImportGISTButton extends StatefulWidget {
 
 class _ImportGISTButtonState extends State<ImportGISTButton> {
   String gistStringOrNull;
-  bool isLoading = false;
-  Gist gist;
 
   @override
   Widget build(BuildContext context) {
@@ -89,18 +166,13 @@ class _ImportGISTButtonState extends State<ImportGISTButton> {
                 suffixIcon: IconButton(
                   icon: Icon(Icons.send),
                   onPressed: () async {
-                    print("aaaaaaaaaaaaa");
                     final id = gistIDFromString(this.gistStringOrNull);
-                    if (id != null) {
-                      setState(() => isLoading = true);
-                      final gist = await loadGist(
-                        client: http.Client(),
-                        gistId: gistIDFromString(this.gistStringOrNull),
-                      );
-                      setState(() {
-                        this.gist = gist;
-                        isLoading = false;
-                      });
+
+                    if (id != null && id != "" && id != "null") {
+                      openSelfWithNewParams((old) => old
+                        ..addAll(<String, dynamic>{
+                          "gist": id,
+                        }));
                     } else {
                       await showDialog<void>(
                           context: context,
@@ -131,47 +203,14 @@ class _ImportGISTButtonState extends State<ImportGISTButton> {
               });
             },
           ),
-          if (!isLoading && gist != null) //
-            ...[
-            const SizedBox(height: 24.0),
-            Text("${gist.description}"),
-            const SizedBox(height: 8.0),
-            const Text(
-              "Please select a file",
-              style: TextStyle(
-                fontSize: 14.0,
-                fontWeight: FontWeight.normal,
-              ),
-            ),
-          ],
         ],
-      ),
-      content: SingleChildScrollView(
-        child: Column(
-          children: <Widget>[
-            if (isLoading)
-              const SizedBox(height: 4.0, child: LinearProgressIndicator()),
-            if (!isLoading && gist != null) //
-              ...gist.files.where((a) => a.hasContent).map(
-                (file) {
-                  return ListTile(
-                    title: Text(file.name),
-                    onTap: () {
-                      widget.setText(file.content);
-                      Navigator.of(context).pop();
-                    },
-                  );
-                },
-              ),
-          ],
-        ),
       ),
     );
   }
 }
 
 Widget _exampleButton(String text, void Function() onTap) {
-  return SizedBox(
+  return Container(
     height: 28.0,
     child: RaisedButton(
       color: Colors.grey[100],

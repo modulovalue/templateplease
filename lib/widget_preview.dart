@@ -16,11 +16,11 @@ class _PreviewWidgetState extends State<PreviewWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(18.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        if (widget.text.isNotEmpty) //
+          ...[
           Wrap(
             spacing: 8.0,
             runSpacing: 8.0,
@@ -28,22 +28,19 @@ class _PreviewWidgetState extends State<PreviewWidget> {
             crossAxisAlignment: WrapCrossAlignment.center,
             children: <Widget>[
               _button(
-                text: "Text",
-                active: preview != PreviewType.text,
+                text: "Text Preview",
+                unselected: preview != PreviewType.text,
                 onTap: () => setState(() => preview = PreviewType.text),
               ),
               _button(
-                text: "Markdown",
-                active: preview != PreviewType.markdown,
+                text: "Markdown Preview",
+                unselected: preview != PreviewType.markdown,
                 onTap: () => setState(() => preview = PreviewType.markdown),
               ),
             ],
           ),
           const SizedBox(height: 24.0),
           _previewWidget(() {
-            if (widget.text.isEmpty) {
-              return "Please import a recipe and tap on Build";
-            }
             return widget.text;
           }(), preview),
           const SizedBox(height: 18.0),
@@ -56,7 +53,7 @@ class _PreviewWidgetState extends State<PreviewWidget> {
             controller: widget.outputController,
           ),
         ],
-      ),
+      ],
     );
   }
 }
@@ -77,20 +74,24 @@ enum PreviewType {
 }
 
 Widget _button({
-  @required bool active,
+  @required bool unselected,
   @required String text,
   @required void Function() onTap,
 }) {
   return Container(
     height: 28.0,
     child: RaisedButton(
-        color: Colors.blue,
-        disabledColor: Colors.blueGrey,
+        color: Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(100.0),
         ),
-        child: Text(text,
-            style: TextStyle(color: active ? Colors.white : Colors.grey[300])),
-        onPressed: active ? onTap : null),
+        disabledColor: Colors.blue,
+        child: Text(
+          text,
+          style: TextStyle(
+            color: unselected ? Colors.black.withOpacity(0.3) : Colors.white,
+          ),
+        ),
+        onPressed: unselected ? onTap : null),
   );
 }
