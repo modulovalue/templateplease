@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:reflected_mustache/mustache.dart';
-import 'package:templateplease/main.dart';
 
 Widget placeholders({
   @required Map<String, TextEditingController> vars,

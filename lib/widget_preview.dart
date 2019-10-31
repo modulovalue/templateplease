@@ -90,7 +90,7 @@ Widget _button({
           borderRadius: BorderRadius.circular(100.0),
         ),
         child: Text(text,
-            style: TextStyle(color: active ? Colors.white : Colors.grey)),
+            style: TextStyle(color: active ? Colors.white : Colors.grey[300])),
         onPressed: active ? onTap : null),
   );
 }

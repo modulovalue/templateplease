@@ -5,6 +5,17 @@ import 'package:http/http.dart';
 
 const String _gistApiUrl = 'https://api.github.com/gists';
 
+final RegExp _gistRegex = RegExp(r'[0-9a-f]+$');
+
+String gistIDFromString(String url) {
+  final matches = _gistRegex.allMatches(url);
+  if (matches.isNotEmpty) {
+    return matches.first.group(0);
+  } else {
+    return null;
+  }
+}
+
 /// Load the gist with the given id.
 Future<Gist> loadGist({
   @required Client client,

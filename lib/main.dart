@@ -42,7 +42,8 @@ class _TestState extends State<Test> {
       final oldDif = oldVars.difference(newVars);
       final newDif = newVars.difference(oldVars);
       oldDif.forEach((str) {
-        vars.remove(str).dispose();
+        // TODO dispose
+        vars.remove(str);
       });
       newDif.forEach((str) => vars[str] = TextEditingController()
         ..addListener(() {
@@ -126,15 +127,21 @@ class _TestState extends State<Test> {
                   children: <Widget>[
                     _verticalCenter(
                       GestureDetector(
-                        onTap: () => js.context.callMethod("open",
-                            <dynamic>["https://twitter.com/modulovalue"]),
-                        child: Text(
-                          "by @modulovalue",
-                          style: TextStyle(
-                            decoration: TextDecoration.underline,
+                          child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          const Text(
+                            "Made with ",
                           ),
-                        ),
-                      ),
+                          const FlutterLogo(
+                            size: 50.0,
+                            style: FlutterLogoStyle.horizontal,
+                          ),
+                          const Text(
+                            " for web",
+                          ),
+                        ],
+                      )),
                     ),
                     _verticalCenter(const Text("•")),
                     _verticalCenter(
@@ -153,21 +160,15 @@ class _TestState extends State<Test> {
                     _verticalCenter(const Text("•")),
                     _verticalCenter(
                       GestureDetector(
-                          child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: <Widget>[
-                          const Text(
-                            "Made with ",
+                        onTap: () => js.context.callMethod("open",
+                            <dynamic>["https://twitter.com/modulovalue"]),
+                        child: Text(
+                          "by @modulovalue",
+                          style: TextStyle(
+                            decoration: TextDecoration.underline,
                           ),
-                          const FlutterLogo(
-                            size: 70.0,
-                            style: FlutterLogoStyle.horizontal,
-                          ),
-                          const Text(
-                            " for web",
-                          ),
-                        ],
-                      )),
+                        ),
+                      ),
                     ),
                   ],
                 ),
