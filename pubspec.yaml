@@ -1,0 +1,19 @@
+name: templateplease
+description: A new Flutter project.
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=2.4.4 <3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  reflected_mustache: ^1.0.11
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  extra_pedantic: 1.1.1
+flutter:
+  uses-material-design: true
