@@ -38,20 +38,18 @@ class _GistInfoWidgetState extends State<GistInfoWidget> {
 
   void updateGist(String gistID) {
     setState(() => isLoading = true);
-    Future.delayed(const Duration(milliseconds: 5000), () {
-      loadGist(
-        client: http.Client(),
-        gistId: gistIDFromString(widget.gistID),
-      ).catchError((dynamic err) {
-        setState(() {
-          this.gist = gist;
-          isLoading = false;
-        });
-      }).then((gist) {
-        setState(() {
-          this.gist = gist;
-          isLoading = false;
-        });
+    loadGist(
+      client: http.Client(),
+      gistId: gistIDFromString(widget.gistID),
+    ).catchError((dynamic err) {
+      setState(() {
+        this.gist = gist;
+        isLoading = false;
+      });
+    }).then((gist) {
+      setState(() {
+        this.gist = gist;
+        isLoading = false;
       });
     });
   }
