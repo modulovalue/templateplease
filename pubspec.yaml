@@ -1,6 +1,7 @@
 name: templateplease
-description: A new Flutter project.
-
+description: Template, Please • Create templates with GitHub gists.
+homepage: https://github.com/modulovalue/templateplease
+author: Modestas Valauskas <valauskasmodestas+dartpub@gmail.com>
 version: 1.0.0+1
 
 environment:
