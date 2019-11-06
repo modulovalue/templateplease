@@ -12,11 +12,19 @@ dependencies:
     sdk: flutter
   reflected_mustache: ^1.0.11
   flutter_markdown: ^0.3.0
+  dart_pad:
+    path: dart-pad/
+  # https://github.com/modulovalue/bird
+  bird_flutter:
+    path: bird/bird_flutter/code
+  # https://github.com/modulovalue/bird
+  bird:
+    path: bird/bird/code
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  extra_pedantic: 1.1.1
+  extra_pedantic: ^1.1.1
 
 flutter:
   uses-material-design: true

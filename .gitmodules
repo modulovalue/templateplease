@@ -1,0 +1,6 @@
+[submodule "bird"]
+	path = bird
+	url = https://github.com/modulovalue/bird
+[submodule "dart-pad"]
+	path = dart-pad
+	url = https://github.com/dart-lang/dart-pad

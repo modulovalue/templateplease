@@ -1,146 +1,92 @@
+import 'dart:async';
+import 'dart:html';
+
+import 'package:bird_flutter/bird_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:http/http.dart' as http;
-import 'package:templateplease/gists.dart';
-import 'package:templateplease/util.dart';
+import 'package:templateplease/util/util.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 
-class GistInfoWidget extends StatefulWidget {
-  final String gistID;
-  final void Function(String) setContent;
+import 'package:dart_pad/sharing/gists.dart';
 
-  const GistInfoWidget({
-    @required this.gistID,
-    @required this.setContent,
-  });
+Widget gistInfoWidget(String gistID, void Function(String) setContent,
+    void Function(String) setError) {
+  return $$ >> (context) {
+    final isLoading = useState(false);
+    final gist = useState<Gist>(null);
+    final selectedFile = useState<String>(null);
+    final reload = useState(false);
 
-  @override
-  _GistInfoWidgetState createState() => _GistInfoWidgetState();
-}
-
-class _GistInfoWidgetState extends State<GistInfoWidget> {
-  bool isLoading = false;
-  Gist gist;
-  String selectedFile;
-
-  @override
-  void initState() {
-    super.initState();
-    updateGist(widget.gistID);
-  }
-
-  @override
-  void didUpdateWidget(GistInfoWidget oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.gistID != widget.gistID) {
-      updateGist(widget.gistID);
-    }
-  }
-
-  void updateGist(String gistID) {
-    setState(() => isLoading = true);
-    loadGist(
-      client: http.Client(),
-      gistId: gistIDFromString(widget.gistID),
-    ).catchError((dynamic err) {
-      setState(() {
-        this.gist = gist;
-        isLoading = false;
+    useMemoized(() {
+      isLoading.value = true;
+      GistLoader(client: http.Client())
+          .loadGist(gistIDFromString(gistID))
+          .then((_gist) {
+        gist.value = _gist;
+        isLoading.value = false;
+      }).catchError((dynamic err, StackTrace st) {
+        setError(
+            "There was a problem while loading your gist. Please try a different gist.");
+        isLoading.value = false;
       });
-    }).then((gist) {
-      setState(() {
-        this.gist = gist;
-        isLoading = false;
-      });
-    });
-  }
+    }, [gistID, reload.value]);
 
-  @override
-  Widget build(BuildContext context) {
-    if (isLoading) {
-      return Container(
-        height: 4.0,
-        child: const LinearProgressIndicator(),
-      );
+    if (isLoading.value) {
+      return height(4.0) > const LinearProgressIndicator();
     } else {
-      return SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: <Widget>[
-            if (gist == null) ...[
-              const Text("Error loading gist"),
-            ] else ...[
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Wrap(
-                  runAlignment: WrapAlignment.start,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: <Widget>[
-                    openLink(
-                      "https://gist.github.com/modulovalue/${widget.gistID}",
-                      Text(
-                        widget.gistID,
-                        style: const TextStyle(color: Colors.blue),
-                      ),
+      return singleChildScrollView()
+          > onColumnCenter()
+              >> [
+                padding(all: 8.0) > onWrapStartCenter() >> [
+                  onTap(() => openUrl("https://gist.github.com/${gistID}"))
+                  & textColor(Colors.blue)
+                      > Text(gistID),
+
+                  const Text(" • "),
+
+                  onTap(() => reload.value = !reload.value)
+                  & textColor(Colors.blue)
+                      > const Text("Reload Gist"),
+                ],
+
+                if (gist.value == null) ...[
+                  const Text(
+                      "The gist was not found. Please provide a valid GitHub gist."),
+                ] else
+                  ...[
+                    opacity(0.7)
+                    & padding(all: 16.0)
+                        > MarkdownBody(
+                      data: gist.value.description ?? "No Description",
+                      onTapLink: (url) => window.open(url, url),
                     ),
-                    const Text(" • "),
-                    GestureDetector(
-                      child: const Text(
-                        "Reload Gist",
-                        style: TextStyle(color: Colors.blue),
-                      ),
-                      onTap: () => updateGist(widget.gistID),
-                    ),
+
+                    padding(all: 8.0)
+                    & opacity(0.5)
+                        > const Text("Select a file"),
+
+                    if (isLoading.value)
+                      height(4.0) > const LinearProgressIndicator(),
+
+                    if (!isLoading.value && gist != null)
+                      padding(all: 8.0) > onWrapCenterCenter(allSpacing: 8.0)
+                          >> gist.value.files.where((a) => a.hasContent).map((
+                              file) {
+                            return height(28.0) > FlatButton(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(28.0),
+                              ),
+                              color: Colors.white,
+                              child: Text(file.name),
+                              onPressed: () {
+                                selectedFile.value = file.name;
+                                setContent(file.content);
+                              },
+                            );
+                          }),
                   ],
-                ),
-              ),
-              Opacity(
-                opacity: 0.7,
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: MarkdownBody(
-                    data: gist.description ?? "No Description",
-                  ),
-                ),
-              ),
-              const Padding(
-                padding: EdgeInsets.all(8.0),
-                child: Opacity(
-                  opacity: 0.5,
-                  child: Text(
-                    "Please select a file",
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8.0),
-              if (isLoading)
-                const SizedBox(height: 4.0, child: LinearProgressIndicator()),
-              if (!isLoading && gist != null) //
-                ...gist.files.where((a) => a.hasContent).map(
-                  (file) {
-                    return Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12.0),
-                        border: Border.all(),
-                        color: file.name == selectedFile
-                            ? Colors.grey.withOpacity(0.1)
-                            : null,
-                      ),
-                      child: ListTile(
-                        title: Text(file.name),
-                        onTap: () {
-                          setState(() {
-                            selectedFile = file.name;
-                            widget.setContent(file.content);
-                          });
-                        },
-                      ),
-                    );
-                  },
-                ),
-            ],
-          ],
-        ),
-      );
+              ];
     }
-  }
+  };
 }

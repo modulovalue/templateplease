@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:templateplease/gists.dart';
+import 'package:templateplease/util/util.dart';
 
 void main() {
   test("gist id parser", () {
